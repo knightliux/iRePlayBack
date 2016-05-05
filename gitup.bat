@@ -1,3 +1,4 @@
+
 @echo off
 set url=%1%
 set commit=%2%
@@ -11,3 +12,4 @@ git pull origin master
 git add -A
 git commit -m "%commit%"
 git push origin master 
+pause
