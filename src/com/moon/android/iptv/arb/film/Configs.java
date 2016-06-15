@@ -9,9 +9,9 @@ public class Configs {
 	//
 	/**Need change data start**/
 	public static final boolean debug = true;
-	public static final String APPID = "2004";
-	public static final String PKG_NAME = "com.mooncloud.android.looktvb";
-	public static boolean isLastNeedPassword = true;  //最后一项输入密码
+	public static final String APPID = "400001";
+	public static final String PKG_NAME = "com.moonlive.android.iptvback";
+
 	/**Need change data end **/
 	
 	public static String link;
@@ -61,39 +61,29 @@ public class Configs {
 		public static final String HOST2="http://vodhk.adfex.click:9012/Api/";//正式库2
 		public static final String HOST3="http://vodhk.gfhjc.work:9012/Api/";//正式库3
 		public static String HOST=HOST1;//正式库
-		
+		 
 //		public static final String HOST1="http://192.168.100.221:9016/Api/";//测试库1
 //		public static final String HOST2="http://192.168.100.221:9016/Api/";//测试库1
 //		public static final String HOST3="http://192.168.100.221:9016/Api/";//测试库1
 //		public static String HOST=HOST1;//测试库
-		/**获取列表缓存地址*/
-		public static String getListCache(){
-			return HOST+"VideoCache/AllList?appid="+APP_ID+"&mac="+MAC;
-		}
-		/**获取授权地址*/
+	
+		/**左侧菜单地址*/
 		public static String getLeftMenuApi(){
-			return HOST+"Video/menu?appid="+APP_ID+"&mac="+MAC;
+			return "Replay/playmenu";
 		}
+		/**取日期列表地址*/
+		public static String getData(){
+			return "Replay/playdate";
+		}
+		public static String getListContent(){
+			return "Replay/playlist";
+		}
+		
 		/**获取授权地址*/
 		public static String getAuthApi(){
 			return HOST+"Auth?appid="+APP_ID+"&mac="+MAC;
 		}
-		/**获取二级菜单基地址，后面还要加CID*/
-		public static String getSeconMenuApi(){
-			return HOST+"Video/submenu?appid="+APP_ID+"&mac="+MAC+"&cid=";
-		}
-		/**获取节目列表基地址*/
-		public static String getProgramApi(){
-			return HOST+"Video/content?appid="+APP_ID+"&mac="+MAC+"&cid=";
-		}
-		/**获取剧集基地址*/
-		public static String getDramaApi(){
-			return HOST+"Video/cli?appid="+APP_ID+"&mac="+MAC+"&sid=";
-		}
-		/**get vod program detail info*/
-		public static String getProgramDetailApi(){
-			return HOST+"Video/cliInfo?appid="+APP_ID+"&mac="+MAC+"&sid=";
-		}
+	
 		
 		public static String getAppMsgApi(){
 			return HOST +"App/appmsg?appid="+ APPID + "&mac=" + MAC;
@@ -103,9 +93,6 @@ public class Configs {
 			return HOST +"App/upgrade?appid="+ APPID + "&mac=" + MAC;
 		}
 		
-		public static String getAdApi(){
-			return HOST +"VideoAd?mac="+MAC+"&appid="+APP_ID+"&cid=";
-		}
 	}
 	
 	public static class Success{
@@ -166,8 +153,5 @@ public class Configs {
 		public static final int HOST_CHANGE_TIME=6;
 	}
 	
-	public static final class HeartBeat{
-		public static final String URL="http://whlist.yourepg.com:9011";
-		public static final String MAC=Configs.URL.MAC;
-	}
+	
 }

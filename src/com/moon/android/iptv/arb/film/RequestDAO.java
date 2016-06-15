@@ -37,9 +37,7 @@ public class RequestDAO {
 					new TypeToken<UpdateData>() {
 					}.getType());
 			if ((localUpdateData != null) && (!localUpdateData.equals(""))) {
-				if ((localUpdateData.getCode() != null)
-						&& (!localUpdateData.getCode().equals(""))
-						&& (localUpdateData.getCode().equals("0"))) {
+				if ((localUpdateData.getCode() != null) && (!localUpdateData.getCode().equals(""))) {
 					return localUpdateData;
 				}
 				return null;

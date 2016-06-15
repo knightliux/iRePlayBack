@@ -1,10 +1,16 @@
 package com.moon.android.activity;
 
+import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
+import net.tsz.afinal.FinalHttp;
+import net.tsz.afinal.http.AjaxCallBack;
+import net.tsz.afinal.http.AjaxParams;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Point;
@@ -29,111 +35,165 @@ import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.moon.android.broadcast.MsgBroadcastReceiver;
 import com.moon.android.iptv.arb.film.Configs;
 import com.moon.android.iptv.arb.film.MsgService;
 import com.moon.android.iptv.arb.film.MyApplication;
 import com.moon.android.model.AuthInfo;
-import com.moon.android.model.Navigation;
-import com.moon.android.model.SeconMenu;
-import com.moon.android.model.VodProgram;
-import com.moon.android.moonplayer.service.NavigationService;
-import com.moon.android.moonplayer.service.ProgramService;
-import com.moon.android.moonplayer.service.SeconMenuService;
+
+
+
+
+import com.moon.android.model.Model_LeftMenu;
+import com.moon.android.model.Model_ListContent;
+import com.moon.android.model.Model_date;
+import com.moon.android.model.TvList;
+import com.moon.android.moonplayer.MainActivity;
+import com.moon.android.moonplayer.VodPlayerActivity;
+import com.moon.android.moonplayer.service.VodVideo;
+import com.mooncloud.android.iptv.adapter.DateMenuAdapter;
 import com.mooncloud.android.iptv.adapter.LeftMenuAdapter;
-import com.mooncloud.android.iptv.adapter.ProgramAdapter;
-import com.mooncloud.android.iptv.adapter.SeconMenuAdapter;
+import com.mooncloud.android.iptv.adapter.ListContentAdapter;
 import com.mooncloud.android.iptv.database.PasswordDAO;
-import com.mooncloud.android.looktvb.R;
 import com.mooncloud.heart.beat.Beat;
 import com.moonclound.android.iptv.util.ActivityUtils;
+import com.moonclound.android.iptv.util.AjaxUtil;
+import com.moonclound.android.iptv.util.AjaxUtil.PostCallback;
 import com.moonclound.android.iptv.util.Logger;
+import com.moonclound.android.iptv.util.MACUtils;
 import com.moonclound.android.iptv.util.StringUtil;
 import com.moonclound.android.view.CustomToast;
 import com.moonclound.android.view.PasswordDialog;
+import com.moonlive.android.iptvback.R;
 
-public class HomeActivity extends Activity implements OnClickListener {
 
-	private Logger logger = Logger.getInstance();
+public class HomeActivity extends Activity {
+
+	private Logger log = Logger.getInstance();
 
 	// 以下是获取授权信息相关
 	private AuthInfo mAuthInfo = MyApplication.authInfo;
-
-	// 以下是左侧菜单相关
-	private Handler mLeftMenuHandler;
-	private NavigationService mNavigationService;
-	private ListView mLeftMenuListView;
-	private List<Navigation> mLeftMenuList = new ArrayList<Navigation>();
-	private LeftMenuAdapter mLeftMenuAdapter;
-	/** 当前左侧菜单列表的cid选项,根据这个值确定加载哪个二级菜单 */
-	private String mCurrentCid;
-
-	// 以下是二级菜单相关变量
-	private static final int SECON_MENU_COLUMN = 10;
-	private Handler mSeconMenuAHandler;
-	private GridView mGridSeconMenu;
-	private SeconMenuAdapter mSeconMenuAdapter;
-	private SeconMenuService mSeconMenuService;
-	private List<SeconMenu> mSeconMenuList = new ArrayList<SeconMenu>();
-	/** 当前二级菜单,每次点一级菜单后这个都默认为第一个选中 */
-	private SeconMenu mCurrentSeconMenu;
-
-	// 以下是节目列表相关
-	private GridView mGridVodShow;
-	List<VodProgram> mVodProgramList = new ArrayList<VodProgram>();
-	private ProgramService mProgramService;
-	private ProgramAdapter mProgramAdapter;
-	public static final int VOD_GRID_COLUMN = 5;
-	private Handler mProgramHandler;
-	private int mTotalItemCount = 0;
-	private int mCurrentSelection = 0;
-
-	/** 页数提示,格式为 2/92,表示总共92条记录，当前为第二条 */
-	private TextView mPagePrompt;
-	private ImageView mLoadingAnim;
-
-	// 限制级影片相关
-	/** 是否已经输入过密码 */
-	private boolean isPassEver = false;
-
 	private MsgBroadcastReceiver mMsgReceiver;
 	private Intent mMsgServiceIntent;
 	private static final int TOAST_TEXT_SIZE = 24;
 
 	private TextView mLoadSeconMenuFailedBtn;
 	private TextView mLoadProgramFailedBtn;
-
+    
+	//左侧菜单相关
+	private Model_LeftMenu mLeftList;
+	private ListView mListMenu;
+	private LeftMenuAdapter mLeftMenuAdapter;
+	//日期列表相关
+	private List<Model_date> mDatelist;
+	private GridView mGv_date;
+	private DateMenuAdapter mGvDate_Adapter;
+	
+	//内容列表相关
+	private ListView mListContent;
+	private ListContentAdapter mListContent_Adapter;
+	
+	//当前选中相关
+	private String now_rid=null;//当前选中左侧菜单ID
+	private String now_date=null;//当前选中日期
+	private int now_date_pos=-1;
+	private List<Model_ListContent> now_listContent=null;//当前选中内容列表
+	private HashMap<String,List<Model_ListContent>> mCache_ListContent=new HashMap<String,List<Model_ListContent>>();
+	
 	//add heart beat to check white list
-	private Beat mHeartBeat=Beat.getInstance(Configs.HeartBeat.URL, Configs.HeartBeat.MAC);
+//	private Beat mHeartBeat=Beat.getInstance(Configs.HeartBeat.URL, Configs.HeartBeat.MAC);
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_home);
-		
-//		addHeartBeat();
-//		
-		initHandler();
-		initService();
 		initView();
-		initAdapter();
-		mNavigationService.initList(mAuthInfo);// 只有执行这句才会一级一级获取各种列表
-
+		GetLeftMenu();
 		registerMyReceiver();
 		startUpdatAndGetMsgService();
+	    
+
 	}
 
-	private void addHeartBeat() {
-		mHeartBeat.start(new Beat.LoginResult() {
+
+
+	private void GetLeftMenu() {
+		// TODO Auto-generated method stub
+		  new AjaxUtil().post(Configs.URL.getLeftMenuApi(),new PostCallback() {
+				
+				@Override
+				public void Success(String t) {
+					// TODO Auto-generated method stub
+//					Log.d("LeftMenuRe",t);
+					try {
+						Gson g=new Gson();
+						mLeftList=g.fromJson(t,new TypeToken<Model_LeftMenu>(){}.getType());
+						if(mLeftList.getTvlist().size()>0){
+							//Log.d("listsuccess",mLeftList.getTvlist().size()+"");
+							showLeftMenu();
+							
+						}
+					} catch (Exception e) {
+						// TODO: handle exception
+					}
+				}
+				
+			
+
+				@Override
+				public void Failure() {
+					// TODO Auto-generated method stub
+					
+				}
+			});
+	}
+	private void showLeftMenu() {
+		// TODO Auto-generated method stub
+		mLeftMenuAdapter=new LeftMenuAdapter(HomeActivity.this, mLeftList.getTvlist());
+		mListMenu.setAdapter(mLeftMenuAdapter);
+		getDataList();
+	}
+	private void showListContent() {
+		// TODO Auto-generated method stub
+		mGvDate_Adapter.clickChang(now_date_pos);
+		mListContent_Adapter=new ListContentAdapter(HomeActivity.this, now_listContent);
+		mListContent.setAdapter(mListContent_Adapter);
+	}
+
+	private void getDataList() {
+		// TODO Auto-generated method stub
+		new AjaxUtil().post(Configs.URL.getData(),new PostCallback() {
+			
 			@Override
-			public void success(String success) {
+			public void Success(String t) {
+				// TODO Auto-generated method stub
+				Log.d("data",t);
+				try {
+					Gson g=new Gson();
+					mDatelist=g.fromJson(t,new TypeToken<List<Model_date>>(){}.getType());
+					Log.d("datasize",mDatelist.size()+"");
+				    if(mDatelist.size()>0){
+				    	mGv_date.setNumColumns(mDatelist.size());
+				    	mGvDate_Adapter=new DateMenuAdapter(HomeActivity.this, mDatelist);
+				    	mGv_date.setAdapter(mGvDate_Adapter);
+				    	changeChannel(0);
+				    }	
+				} catch (Exception e) {
+					// TODO: handle exception
+				}
+			}
+			
+			@Override
+			public void Failure() {
+				// TODO Auto-generated method stub
 				
 			}
-			@Override
-			public void fail(String error) {
-				mHeartBeat.login();
-			}
 		});
+		
 	}
+
+
 
 	private void startUpdatAndGetMsgService() {
 		mMsgServiceIntent = new Intent(this, MsgService.class);
@@ -151,373 +211,178 @@ public class HomeActivity extends Activity implements OnClickListener {
 	/**
 	 * 初始化获取各种列表的服务类
 	 */
-	private void initService() {
-		mNavigationService = new NavigationService(mLeftMenuHandler);
-		mSeconMenuService = new SeconMenuService(mSeconMenuAHandler);
-		mProgramService = new ProgramService(mProgramHandler);
-	}
 
-	private void initAdapter() {
-		initLeftMenuAdapter();
-		initSeconMenuAdapter();
-		initProgramAdapter();
-	}
 
-	private void initLeftMenuAdapter() {
-//		mLeftMenuList.clear();
-//		Log.d("11",mLeftMenuList.size()+"");
-		mLeftMenuAdapter = new LeftMenuAdapter(this, mLeftMenuList);
-		mLeftMenuListView.setAdapter(mLeftMenuAdapter);
-	
 
-	}
 
-	private void initSeconMenuAdapter() {
-		mSeconMenuAdapter = new SeconMenuAdapter(this, mSeconMenuList);
-		mGridSeconMenu.setAdapter(mSeconMenuAdapter);
-	}
-
-	private void initProgramAdapter() {
-		mProgramAdapter = new ProgramAdapter(this, mVodProgramList);
-		mGridVodShow.setAdapter(mProgramAdapter);
-	}
 
 	private void initView() {
-
-		mLeftMenuListView = (ListView) findViewById(R.id.main_cat_list);
-		mLeftMenuListView.setOnItemClickListener(new OnLeftMenuItemClickListener());
-		mLeftMenuListView.setOnItemSelectedListener(new OnLeftMenuItemSelectedListener());
-
-		mGridSeconMenu = (GridView) findViewById(R.id.secon_menu_grid);
-		mGridSeconMenu.setNumColumns(SECON_MENU_COLUMN);
-		mGridSeconMenu.setOnItemClickListener(new OnSeconMenuItemClickListener());
-
-		mGridVodShow = (GridView) findViewById(R.id.main_subcat_grid);
-		mGridVodShow.setNumColumns(VOD_GRID_COLUMN);
-		mGridVodShow.setOnKeyListener(new OnGridVodKeyListener());
-		mGridVodShow.setOnItemClickListener(new OnGridVodItemClickListener());
-		mGridVodShow.setOnItemSelectedListener(new OnGridVodItemSelectedListener());
-
-		mLoadingAnim = (ImageView) findViewById(R.id.loading_anim);
-		((AnimationDrawable)mLoadingAnim.getDrawable()).start();
-		mPagePrompt = (TextView) findViewById(R.id.main_page);
-
-		mLoadSeconMenuFailedBtn = (TextView) findViewById(R.id.failed_to_get_seconmenu);
-		mLoadSeconMenuFailedBtn.setOnClickListener(this);
-
-		mLoadProgramFailedBtn = (TextView) findViewById(R.id.failed_to_get_program);
-		mLoadProgramFailedBtn.setOnClickListener(this);
-
+		mGv_date=(GridView) findViewById(R.id.main_date);
+		mListMenu=(ListView) findViewById(R.id.main_leftmenu);
+		mListContent=(ListView) findViewById(R.id.main_list_content);
+		mListContent.setOnItemClickListener(mlistContentClick);
+		mListMenu.setOnItemClickListener(mLeftMenuClick);
+		mGv_date.setOnItemClickListener(mdataMenuClick);
+		mListContent.setOnItemSelectedListener(mlistContentSelect);
 	}
-
-	@SuppressLint("HandlerLeak")
-	private void initHandler() {
-
-		mLeftMenuHandler = new Handler() {
-			@Override
-			public void handleMessage(Message msg) {
-				switch (msg.what) {
-				case Configs.Success.GET_LEFT_MENU:
-
-					List<Navigation> list = mNavigationService.findAll();
-                    
-					mLeftMenuList.clear();
-					mLeftMenuList.addAll(list);			
-					mLeftMenuAdapter.notifyDataSetChanged(0);
-
-					if (mLeftMenuList.size() > 0) {
-						mCurrentCid = mLeftMenuList.get(0).getCid();
-						mSeconMenuService.initList(mCurrentCid);
-					}
-					break;
-				}
-			}
-
-		};
-
-		mSeconMenuAHandler = new Handler() {
-			@Override
-			public void handleMessage(Message msg) {
-				switch (msg.what) {
-				case Configs.Success.GET_SECON_MENU:
-
-					setViewVisible(mLoadingAnim, false);
-					setViewVisible(mGridSeconMenu, true);
-					setViewVisible(mLoadSeconMenuFailedBtn, false);
-					setViewVisible(mPagePrompt, true);
-					
-					List<SeconMenu> list = mSeconMenuService.getList();
-					// 如果没有二级菜单，就给一个默认的二级菜单SeconMenu("全部",null,null);
-					if (list.size() == 0) {
-						list.add(new SeconMenu());
-					}
-
-					mSeconMenuList.clear();
-					mSeconMenuList.addAll(list);
-					mSeconMenuAdapter.notifyDataSetChanged(0);
-
-					if (mSeconMenuList.size() > 0) {
-
-						setViewVisible(mLoadingAnim, true);
-						mGridVodShow.setVisibility(View.INVISIBLE);
-						mPagePrompt.setVisibility(View.INVISIBLE);
-						
-						mCurrentSeconMenu = mSeconMenuList.get(0);
-						// 初始化二级菜单列表后，加载节目列表
-						mProgramService.initList(mCurrentCid, mCurrentSeconMenu);
-					}
-
-					break;
-				case Configs.Failure.GET_SECON_MENU:
-					setViewVisible(mLoadingAnim, false);
-					mGridVodShow.setVisibility(View.INVISIBLE);
-					setViewVisible(mLoadSeconMenuFailedBtn, true);
-					setViewVisible(mGridSeconMenu, false);
-					mPagePrompt.setVisibility(View.INVISIBLE);
-					break;
-				}
-			}
-		};
-
-		mProgramHandler = new Handler() {
-			@Override
-			public void handleMessage(Message msg) {
-				switch (msg.what) {
-				case Configs.Success.GET_PROGRAM_LIST:
-					
-					setViewVisible(mGridSeconMenu, true);
-					setViewVisible(mLoadingAnim, false);
-					setViewVisible(mGridVodShow, true);
-					setViewVisible(mLoadProgramFailedBtn, false);
-					setViewVisible(mPagePrompt, true);
-					
-					List<VodProgram> list = mProgramService.getList();
-					mVodProgramList.clear();
-					mVodProgramList.addAll(list);
-					mProgramAdapter.notifyDataSetChanged();
-					mGridVodShow.setSelection(0);
-					mTotalItemCount = mProgramAdapter.getCount();
-					mCurrentSelection = 0;
-					resetPagePrompt(mCurrentSelection, mTotalItemCount);
-					break;
-				case Configs.Failure.GET_PROGRAM_LIST:
-					setViewVisible(mLoadingAnim, false);
-					mGridVodShow.setVisibility(View.INVISIBLE);
-					setViewVisible(mLoadProgramFailedBtn, true);
-					setViewVisible(mGridSeconMenu, false);
-					break;
-				}
-			}
-
-		};
-	}
-
-	private void resetPagePrompt(int mSelectedPosition, int mTotalItemCount) {
-		mPagePrompt.setText((mSelectedPosition + 1) + "/" + mTotalItemCount);
-	}
-
-	private class OnLeftMenuItemSelectedListener implements
-			OnItemSelectedListener {
+	OnItemClickListener mlistContentClick=new OnItemClickListener(){
 
 		@Override
-		public void onItemSelected(AdapterView<?> parent, View view,
-				int position, long id) {
+		public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
+				long arg3) {
+			// TODO Auto-generated method stub
+			startPlay(arg2);
+		}
+		
+	}; 
+	OnItemSelectedListener mlistContentSelect=new OnItemSelectedListener(){
 
+		@Override
+		public void onItemSelected(AdapterView<?> arg0, View arg1, int arg2,
+				long arg3) {
+			// TODO Auto-generated method stub
+			log.i("listselect:"+arg2);
+			mListContent_Adapter.selectChang(arg2);
 		}
 
 		@Override
-		public void onNothingSelected(AdapterView<?> parent) {
+		public void onNothingSelected(AdapterView<?> arg0) {
+			// TODO Auto-generated method stub
+			log.i("listselect:"+"none");
+			mListContent_Adapter.selectChang(-1);
 		}
-
-	}
-
-	private class OnLeftMenuItemClickListener implements OnItemClickListener {
+		
+	}; 
+	OnItemClickListener mdataMenuClick=new OnItemClickListener(){
 
 		@Override
-		public void onItemClick(AdapterView<?> parent, final View view,
-				final int position, long id) {
-
-			//if is Cloud Vod App ,last left menu will be limited
-			if (position == mLeftMenuList.size() - 1 && !isPassEver
-					&& Configs.isLastNeedPassword && Configs.PKG_NAME.equals("com.mooncloud.android.iptv")) {
-				logger.i("=====进入限制区=====");
-				final PasswordDAO passwordDao = new PasswordDAO(getApplicationContext());
-				// 最后一个为限制级片区，需加密
-				// check 是否加密
-				if (passwordDao.isTableNull()) {
-					logger.i("=====检测到限制区未设置密码=====");
-					setPassword(passwordDao, view, position);
-				} else {
-					logger.i("=====检测到限制区已经设置密码=====");
-					// 输入密码
-					final PasswordDialog pd = PasswordDialog
-							.createDialog(HomeActivity.this);
-					pd.setTitle(R.string.input_password);
-					pd.hidePassword02()
-							.setPositiveListener(new OnClickListener() {
-								@Override
-								public void onClick(View view) {
-									boolean isPass = passwordDao.isExist(pd
-											.getPassword01());
-									if (isPass) {
-										isPassEver = true;
-										// 验证通过
-										changeLeftMenu(position);
-										// changeNavColor(view);
-										// changeCat(position);
-										pd.dismiss();
-									} else {
-										new CustomToast(
-												HomeActivity.this,
-												getString(R.string.password_wrong),
-												TOAST_TEXT_SIZE).show();
-									}
-								}
-							}).setModifyListener(new OnClickListener() {
-								@Override
-								public void onClick(View v) {
-									boolean isPass = passwordDao.isExist(pd
-											.getPassword01());
-									if (isPass) {
-										pd.dismiss();
-										setPassword(passwordDao, view, position);
-									} else {
-										new CustomToast(
-												HomeActivity.this,
-												getString(R.string.password_wrong),
-												TOAST_TEXT_SIZE).show();
-									}
-								}
-							}).show();
-				}
-			} else {
-				logger.i("=====其它区=====");
-				setViewVisible(mGridSeconMenu, false);
-				mGridVodShow.setVisibility(View.INVISIBLE);
-				mPagePrompt.setVisibility(View.INVISIBLE);
-				changeLeftMenu(position);
-			}
-
-		}
-	}
-
-	private void setPassword(final PasswordDAO passwordDao, final View view,
-			final int position) {
-		passwordDao.deleteAll();
-		// 如果没有设置密码
-		final PasswordDialog pd = PasswordDialog
-				.createDialog(HomeActivity.this);
-		pd.setTitle(R.string.password_setting);
-		pd.hideModify().setPositiveListener(new OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				String pd1 = pd.getPassword01();
-				String pd2 = pd.getPassword02();
-				if (!StringUtil.isBlank(pd1) && !StringUtil.isBlank(pd2)) {
-					if (pd1.equals(pd2)) {
-						passwordDao.insert(pd1);
-						changeLeftMenu(position);
-						// changeNavColor(view);
-						// changeCat(position);
-						pd.dismiss();
-					} else {
-						new CustomToast(HomeActivity.this,
-								getString(R.string.password_not_match),
-								TOAST_TEXT_SIZE).show();
-					}
-				} else {
-					new CustomToast(HomeActivity.this,
-							getString(R.string.password_not_null),
-							TOAST_TEXT_SIZE).show();
-				}
-			}
-		}).show();
-	}
-
-	public void changeLeftMenu(int position) {
-		mLeftMenuAdapter.notifyDataSetChanged(position);
-
-		mCurrentCid = mLeftMenuList.get(position).getCid();
-
-		setViewVisible(mLoadingAnim, true);
-		mSeconMenuService.initList(mCurrentCid);
-	}
-
-	private class OnSeconMenuItemClickListener implements OnItemClickListener {
-
-		@Override
-		public void onItemClick(AdapterView<?> parent, View view, int position,
-				long id) {
-			mSeconMenuAdapter.notifyDataSetChanged(position);
-
-			mCurrentSeconMenu = mSeconMenuList.get(position);
-			setViewVisible(mLoadingAnim, true);
-			mPagePrompt.setVisibility(View.INVISIBLE);
-			mGridVodShow.setVisibility(View.INVISIBLE);
-			mProgramService.initList(mCurrentCid, mCurrentSeconMenu);
-		}
-	}
-
-	private class OnGridVodKeyListener implements OnKeyListener {
-
-		@Override
-		public boolean onKey(View v, int keyCode, KeyEvent event) {
-
-			mCurrentSelection = mGridVodShow.getSelectedItemPosition();
-			return false;
+		public void onItemClick(AdapterView<?> arg0, View arg1, int pos,
+				long arg3) {
+			// TODO Auto-generated method stub
+			GetListContent(now_rid,pos); 	
 		}
 
-	}
-
-	// 翻页滚动效果，但效果没达到预期，暂时停做
-	private class OnGridVodItemSelectedListener implements
-			OnItemSelectedListener {
+	};
+	OnItemClickListener mLeftMenuClick=new OnItemClickListener(){
 
 		@Override
-		public void onItemSelected(AdapterView<?> parent, View view,
-				int position, long id) {
-
-			/*
-			 * int smoothDistance = view.getMeasuredHeight() - 30;//
-			 * V代表整个GridView,垂直滚动举例 int duration = 1000;// 移动延迟
-			 * 
-			 * int nextSelection = mGridVodShow.getSelectedItemPosition(); int
-			 * tempPosition = mTotalItemCount - mTotalItemCount %
-			 * VOD_GRID_COLUMN - VOD_GRID_COLUMN;// 倒数第三行最后一个的位置
-			 * 
-			 * // 当滚动到第一页或者最后一页的时候就不滚动了 if (mCurrentSelection + VOD_GRID_COLUMN
-			 * == nextSelection && mCurrentSelection < tempPosition) {
-			 * mGridVodShow.smoothScrollBy(smoothDistance, duration); } else if
-			 * (mCurrentSelection - VOD_GRID_COLUMN == nextSelection &&
-			 * mCurrentSelection >= VOD_GRID_COLUMN * 2) {
-			 * mGridVodShow.smoothScrollBy(-smoothDistance, duration); }
-			 */
-
-			resetPagePrompt(position, mTotalItemCount);
+		public void onItemClick(AdapterView<?> arg0, View arg1, int pos,
+				long arg3) {
+			// TODO Auto-generated method stub
+			changeChannel(pos);
+			
+		}};
+	private void changeChannel(int pos){
+		mLeftMenuAdapter.clickChang(pos);
+		TvList item=mLeftList.getTvlist().get(pos);
+		if(!item.getRid().equals(now_rid)){
+			now_rid=item.getRid();
+			GetListContent(now_rid,0);
+		}
+	}
+	private void startPlay(int position) {
+		List<VodVideo> listVOdVideo = new ArrayList<VodVideo>();
+		for (Model_ListContent v : now_listContent) {
+			VodVideo video = new VodVideo();
+			String Url=v.getUrl();
+			String[] UrlArr=Url.split("/");
+			//force://lookback.itvpad.co:9906/56a4fd4b0003e1ae020eb5435a93120a
+			video.setChannelId(UrlArr[3]);
+		
+			video.setLink("11");
+	
+			video.setName(v.getName());
+		
+			video.setStreamip(UrlArr[2]);
+	
+			video.setType("mp4");
+			video.setUrl(v.getUrl());
+	
+			listVOdVideo.add(video);
+		
 		}
 
-		@Override
-		public void onNothingSelected(AdapterView<?> parent) {
-		}
-
-	}
-
-	private class OnGridVodItemClickListener implements OnItemClickListener {
-
-		@Override
-		public void onItemClick(AdapterView<?> parent, View view, int position,
-				long id) {
-			VodProgram vodProgram = mVodProgramList.get(position);
-//			ActivityUtils.startActivity(HomeActivity.this, VodsActivity.class,Configs.INTENT_PARAM, vodProgram);
-			  
+		ComponentName componetName = new ComponentName(this,
+				VodPlayerActivity.class);
+		try {
 			Intent intent = new Intent();
-			intent.putExtra(Configs.INTENT_PARAM_2, mCurrentCid);
-			intent.setClass(HomeActivity.this, VodsActivity.class);
-			intent.putExtra(Configs.INTENT_PARAM, vodProgram);
-			HomeActivity.this.startActivity(intent);
+			
+			intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+			intent.putExtra("programName", now_listContent.get(position).getName());
+			intent.putExtra("videolist", (Serializable) listVOdVideo);
+//			intent.putExtra("hasHistory", isPlayHistory);
+			intent.putExtra("index", position);
+//			intent.putExtra("appmsg", MyApplication.appMsg + "+++"
+//					+ Configs.APPID);
+			
+			intent.setComponent(componetName);
+			startActivity(intent);
+		} catch (Exception e) {
+			
 		}
-
 	}
+	
+	private void GetListContent(String now_rid, int datepos) {
+			// TODO Auto-generated method stub
+		    now_date_pos=datepos;
+		    now_date=mDatelist.get(datepos).getDate();
+		    if(mCache_ListContent.get(getCacheKey())==null){
+		    	log.i("getcontentFrom Net");
+		    	getListContentFromNet(now_rid,datepos);
+		    }else{
+		    	now_listContent=mCache_ListContent.get(getCacheKey());
+		    	showListContent();
+		    	log.i("getcontentFrom CaChe");
+		    }
+			
+	}
+	private String getCacheKey() {
+		// TODO Auto-generated method stub
+		return now_rid+now_date;
+	}
+    private void SaveListCache(){
+    	mCache_ListContent.put(now_rid+now_date, now_listContent);
+    }
+
+
+	private void getListContentFromNet(String now_rid2, final int datepos) {
+		// TODO Auto-generated method stub
+		    AjaxParams params=new AjaxParams();
+		    params.put("rid", now_rid2);
+		    params.put("date", mDatelist.get(datepos).getDate());
+		    params.put("mac", MACUtils.getMac());
+		    params.put("appid",Configs.APPID);
+		    new AjaxUtil().post(Configs.URL.getListContent(),params,new PostCallback() {
+				
+				@Override
+				public void Success(String t) {
+					// TODO Auto-generated method stub
+					 
+					Log.d("list",t);
+					try {
+						Gson g=new Gson();
+						now_listContent=g.fromJson(t, new TypeToken<List<Model_ListContent>>(){}.getType());
+						if(now_listContent.size()>0){
+							SaveListCache();
+							showListContent();
+						}
+						
+					} catch (Exception e) {
+						// TODO: handle exception
+					}
+				}
+				
+			
+
+				@Override
+				public void Failure() {
+					// TODO Auto-generated method stub
+					
+				}
+			});
+	}
+
+
 
 	/**
 	 * 修改View的显示状态
@@ -531,7 +396,7 @@ public class HomeActivity extends Activity implements OnClickListener {
 			view.setVisibility(View.GONE);
 		}
 	}
-
+ 
 	@Override
 	public void onBackPressed() {
 		showExitWindow();
@@ -573,8 +438,7 @@ public class HomeActivity extends Activity implements OnClickListener {
 	}
 
 	private void clearCache() {
-		MyApplication.programCache.clear();
-		MyApplication.seconMenuCache.clear();
+
 	}
 	
 	private void exitPopDismiss() {
@@ -589,18 +453,5 @@ public class HomeActivity extends Activity implements OnClickListener {
 		super.onDestroy();
 	}
 
-	@Override
-	public void onClick(View v) {
-		// TODO Auto-generated method stub
-		v.setVisibility(View.GONE);
-		setViewVisible(mLoadingAnim, true);
-		switch (v.getId()) {
-		case R.id.failed_to_get_program:
-			mProgramService.initList(mCurrentCid, mCurrentSeconMenu);
-			break;
-		case R.id.failed_to_get_seconmenu:
-			mSeconMenuService.initList(mCurrentCid);
-			break;
-		}
-	}
+
 }

@@ -2,74 +2,117 @@ package com.mooncloud.android.iptv.adapter;
 
 import java.util.List;
 
-import android.animation.AnimatorSet;
-import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.res.ColorStateList;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.moon.android.model.Navigation;
-import com.mooncloud.android.looktvb.R;
 
-public class LeftMenuAdapter extends BaseAdapter<Navigation> {
 
-	private int mSelected=-1;
-	
-	public LeftMenuAdapter(Context context, List<Navigation> list) {
-		super(context, list);
+
+
+
+
+
+
+
+
+
+import com.moon.android.model.Model_LeftMenu;
+import com.moon.android.model.TvList;
+import com.moonlive.android.iptvback.R;
+import com.nostra13.universalimageloader.core.DisplayImageOptions;
+import com.nostra13.universalimageloader.core.ImageLoader;
+
+
+@SuppressLint("ResourceAsColor")
+public class LeftMenuAdapter extends BaseAdapter {
+
+	private Context mContext;
+	private DisplayImageOptions mOptions;
+	private List<TvList> mlist;
+    private int clickpos=-1;
+	public LeftMenuAdapter(Context context, List<TvList> list) {
+		mlist = list;
+		mContext=context;
+		mOptions = new DisplayImageOptions.Builder()
+//		.showImageOnLoading(R.drawable.pic_loading)
+//		.showImageForEmptyUri(R.drawable.pic_loading)
+//		.showImageOnFail(R.drawable.pic_loading).cacheInMemory(true)
+		.cacheOnDisk(true).considerExifParams(true)
+		// .displayer(new RoundedBitmapDisplayer(20))
+		.build();
+
+	}
+    public void clickChang(int pos){
+    	this.clickpos=pos;
+    	notifyDataSetChanged();
+    }
+	@Override
+	public int getCount() {
+		// TODO Auto-generated method stub
+		return mlist.size();
+	}
+   
+	@Override
+	public Object getItem(int arg0) {
+		// TODO Auto-generated method stub
+		return mlist.get(arg0);
 	}
 
 	@Override
-	public View getView(int position, View convertView, ViewGroup parent) {
-		ViewHolder holder=null;
-		if(convertView==null){
-			holder=new ViewHolder();
-			convertView=mInflater.inflate(R.layout.catgory_item, null);
-			initHolder(holder,convertView);
+	public long getItemId(int arg0) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public View getView(int position, View convertView, ViewGroup arg2) {
+		// TODO Auto-generated method stub
+		Holder holder = null;
+		TvList item = mlist.get(position);
+		if (null == convertView) {
+			holder = new Holder();
+			convertView = LayoutInflater.from(mContext).inflate(R.layout.left_menu_item, null);
+			//holder.image = (ImageView) convertView.findViewById(R.id.index_img);
+			holder.name=(TextView) convertView.findViewById(R.id.left_menu_name);
+//			holder.num=(TextView) convertView.findViewById(R.id.list_item_num);
+			holder.logo=(ImageView) convertView.findViewById(R.id.left_menu_ico);
 			convertView.setTag(holder);
-		}else{
-			holder=(ViewHolder) convertView.getTag();
+
+			//
+		} else {
+			holder = (Holder) convertView.getTag();
 		}
-		initHolderData(holder,position);
+		if(position==clickpos){
+			holder.name.setTextColor(mContext.getResources().getColor(R.color.yellow_half));
+		}else{
+//			 holder.name.setTextColor((ColorStateList) mContext.getResources().getColorStateList(R.drawable.left_color_selector) );
+			holder.name.setTextColor(mContext.getResources().getColor(R.color.white));
+		}
+		ImageLoader.getInstance().displayImage(item.getIco(), holder.logo,
+				mOptions);
+		holder.name.setText(item.getName());
+		//holder.country.setText(item.getCountry());
+	
+	
+//         convertView.setBackgroundResource(R.drawable.search_list_selector);
+
 		return convertView;
-	}
-	
-	@SuppressLint("NewApi")
-	private void initHolderData(ViewHolder holder, int position) {
-		Navigation navigation = mList.get(position);
-		holder.menuName.setText(navigation.getName());
-		if(mSelected==position){
-			
-			holder.menuName.setTextSize(35f);
-			
-			ObjectAnimator animX=ObjectAnimator.ofFloat(holder.menuName, "scaleX", 1f,1.1f);
-			ObjectAnimator animY=ObjectAnimator.ofFloat(holder.menuName, "scaleY", 1f,1.1f);
-			AnimatorSet set=new AnimatorSet();
-			
-			set.playTogether(animX,animY);
-			set.start();
-			
-			holder.menuName.setTextColor(0xFFFFD700);
-		}else{
-			holder.menuName.setTextSize(30f);
-			holder.menuName.setTextColor(0xFFFFFFFF);
-		}
+
 	}
 
-	private void initHolder(ViewHolder holder, View view) {
-		holder.menuName=(TextView) view.findViewById(R.id.catgory_item_text);
-	}
-	
-	public void notifyDataSetChanged(int selected) {
-		mSelected=selected;
-		super.notifyDataSetChanged();
+	class Holder {
+	   
+		TextView name,num;
+		ImageView logo;
 	}
 
 
 
-	static class ViewHolder{
-		TextView menuName;
-	}
 }

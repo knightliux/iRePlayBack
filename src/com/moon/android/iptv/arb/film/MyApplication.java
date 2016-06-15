@@ -9,9 +9,7 @@ import android.app.Application;
 import android.content.Context;
 
 import com.moon.android.model.AuthInfo;
-import com.moon.android.model.Drama;
-import com.moon.android.model.SeconMenu;
-import com.moon.android.model.VodProgram;
+
 import com.moonclound.android.iptv.util.UpdateData;
 import com.nostra13.universalimageloader.cache.disc.naming.Md5FileNameGenerator;
 import com.nostra13.universalimageloader.core.ImageLoader;
@@ -27,10 +25,9 @@ public class MyApplication extends Application {
 	public static AuthInfo authInfo;
 
 	/**将已经呈现过的节目列表保存到Application范围*/
-	public static Map<String,Map<String,List<VodProgram>>>programCache=new HashMap<String, Map<String,List<VodProgram>>>();
+//	public static Map<String,Map<String,List<VodProgram>>>programCache=new HashMap<String, Map<String,List<VodProgram>>>();
 	
-	/**将已经呈现过的二级菜单列表保存到Application范围*/
-	public static Map<String,List<SeconMenu>>seconMenuCache=new HashMap<String, List<SeconMenu>>();
+
 	
 	@Override
 	public void onCreate() {

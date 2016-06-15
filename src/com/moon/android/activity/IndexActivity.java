@@ -19,11 +19,12 @@ import com.moon.android.iptv.arb.film.Configs;
 import com.moon.android.iptv.arb.film.MyApplication;
 import com.moon.android.iptv.arb.film.StatusCodeMoon;
 import com.moon.android.moonplayer.service.AuthService;
-import com.moon.android.moonplayer.service.ListCacheService;
-import com.mooncloud.android.looktvb.R;
+
+import com.moon.android.moonplayer.util.MACUtils;
 import com.moonclound.android.iptv.util.ActivityUtils;
 import com.moonclound.android.iptv.util.Logger;
 import com.moonclound.android.iptv.util.NetworkUtil;
+import com.moonlive.android.iptvback.R;
 
 public class IndexActivity extends Activity {
 	private ImageView mImageLoad;
@@ -32,7 +33,7 @@ public class IndexActivity extends Activity {
 	private LinearLayout mContainerLoad;
 	private LinearLayout mContainerError;
 	private Button mBtnReload, mBtnCancel;
-	private TextView mTextPrompt;
+	private TextView mTextPrompt,mtv_mac;
 
 	private String mCachePah = Configs.CONTENT_CACHE_FILE;
 
@@ -57,13 +58,13 @@ public class IndexActivity extends Activity {
 	private void initView() {
 		mImageLoad = (ImageView) findViewById(R.id.welcome_image);
 		mImageLoad.setImageResource(R.anim.load_animation);
-
+		mtv_mac=(TextView) findViewById(R.id.index_mac);
 		mContainerLoad = (LinearLayout) findViewById(R.id.load_container);
 		mContainerError = (LinearLayout) findViewById(R.id.error_container);
 		mBtnReload = (Button) findViewById(R.id.reload);
 		mBtnCancel = (Button) findViewById(R.id.cancel);
 		mTextPrompt = (TextView) findViewById(R.id.text_load_prompt);
-
+		mtv_mac.setText("MAC："+MACUtils.getMac());
 		mBtnReload.setOnClickListener(mErrBtnClickListener);
 		mBtnCancel.setOnClickListener(mErrBtnClickListener);
 	}
@@ -106,7 +107,7 @@ public class IndexActivity extends Activity {
 				break;
 			case Configs.NETWORK_CONNECT:
 				logger.i("联网状 态开始");
-				new ListCacheService(mHandler);
+				//new ListCacheService(mHandler);
 				mAuthService = new AuthService(mHandler);//联网成功就获取授权
 				mAuthService.initAuth();
 				

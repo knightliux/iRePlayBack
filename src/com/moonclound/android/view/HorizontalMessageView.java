@@ -6,7 +6,7 @@ import android.view.LayoutInflater;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
 
-import com.mooncloud.android.looktvb.R;
+import com.moonlive.android.iptvback.R;
 
 public class HorizontalMessageView extends LinearLayout {
 	private HorizontalScrollTextView hTextView = (HorizontalScrollTextView) LayoutInflater

@@ -11,4 +11,7 @@
 	<color name="cat_select">#F0E68C</color>
 	
 	<color name="black_half">#aa000000</color>
+	
+	<color name="yellow_half">#cc3300</color>
+	
 </resources>

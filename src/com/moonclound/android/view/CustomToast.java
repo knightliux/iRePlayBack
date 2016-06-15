@@ -11,7 +11,7 @@ import android.widget.LinearLayout.LayoutParams;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.mooncloud.android.looktvb.R;
+import com.moonlive.android.iptvback.R;
 
 @SuppressLint("NewApi")
 public class CustomToast extends Toast {

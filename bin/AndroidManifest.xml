@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.mooncloud.android.looktvb"
+    package="com.moonlive.android.iptvback"
     android:versionCode="20160413"
     android:versionName="20160413" >
 

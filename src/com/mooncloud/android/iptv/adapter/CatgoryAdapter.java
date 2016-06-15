@@ -9,8 +9,8 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 
-import com.mooncloud.android.looktvb.R;
 import com.moonclound.android.iptv.util.VodCategory;
+import com.moonlive.android.iptvback.R;
 
 public class CatgoryAdapter extends BaseAdapter{
 

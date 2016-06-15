@@ -19,6 +19,7 @@ import android.graphics.Point;
 import android.net.Uri;
 import android.text.Html;
 import android.text.Spanned;
+import android.util.Log;
 import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -30,10 +31,10 @@ import android.widget.Toast;
 
 import com.moon.android.iptv.arb.film.Configs;
 import com.moon.android.iptv.arb.film.MyApplication;
-import com.mooncloud.android.looktvb.R;
 import com.moonclound.android.iptv.util.Logger;
 import com.moonclound.android.iptv.util.UpdateData;
 import com.moonclound.android.view.GGTextView;
+import com.moonlive.android.iptvback.R;
 
 public class MsgBroadcastReceiver extends BroadcastReceiver {
 
@@ -58,9 +59,10 @@ public class MsgBroadcastReceiver extends BroadcastReceiver {
 		} 
 		if(Configs.BroadCast.UPDATE_MSG.equals(intent.getAction())){
  			UpdateData updata = MyApplication.updateData;
+ 			logger.i("updata :"+updata.getMsg());
 			String appUrl = updata.getUrl();
 //			String msg = updata.getMsg();
-			initPopWindow(appUrl, updata); 
+//			initPopWindow(appUrl, updata); 
 		} 
 	}
 

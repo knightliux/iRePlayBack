@@ -7,7 +7,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import com.mooncloud.android.looktvb.R;
+import com.moonlive.android.iptvback.R;
 
 public class PasswordDialog extends Dialog {
 
