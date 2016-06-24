@@ -37,7 +37,7 @@ public class Configs {
 	//PLAYER VERSION  file in /ASSETS/MoonPlayer_xx.apk
 	//public static final String PLAYER_VERSION = "1.0";
 	public static final String PLAYER_PKG = "com.moon.android.moonplayer";
-	public static final String APK_NAME="update.apk";
+	public static final String APK_NAME="ireplayupdate.apk";
 	public static final String INTENT_PARAM = "intent_param1";
 	public static final String INTENT_PARAM_2 = "intent_param2";
 	
@@ -57,9 +57,9 @@ public class Configs {
 		
 		//vodchina1.ibcde.net(xiangYunZhiBo)
 		//vod1.ibcde.net(yueGangShiJie)
-		public static final String HOST1="http://vodhk.videohk.video:9012/Api/";//正式库1
-		public static final String HOST2="http://vodhk.adfex.click:9012/Api/";//正式库2
-		public static final String HOST3="http://vodhk.gfhjc.work:9012/Api/";//正式库3
+		public static final String HOST1="http://replay1.yourepg.com:9011/Api/";//正式库1
+		public static final String HOST2="http://replay2.yourepg.com:9011/Api/";//正式库2
+		public static final String HOST3="http://replay3.yourepg.com:9011/Api/";//正式库3
 		public static String HOST=HOST1;//正式库
 		 
 //		public static final String HOST1="http://192.168.100.221:9016/Api/";//测试库1
@@ -78,7 +78,7 @@ public class Configs {
 		public static String getListContent(){
 			return "Replay/playlist";
 		}
-		
+		 
 		/**获取授权地址*/
 		public static String getAuthApi(){
 			return HOST+"Auth?appid="+APP_ID+"&mac="+MAC;

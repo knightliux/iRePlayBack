@@ -97,7 +97,7 @@
                     android:layout_height="fill_parent"
                     android:layout_weight="6"
                     android:divider="@drawable/epg_channel_bg_line"
-                    android:horizontalSpacing="5dp"
+                    android:horizontalSpacing="15dp"
                     android:listSelector="@drawable/list_selector"
                     android:numColumns="7" >
                 </GridView>

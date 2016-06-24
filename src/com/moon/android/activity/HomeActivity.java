@@ -9,6 +9,7 @@ import net.tsz.afinal.FinalHttp;
 import net.tsz.afinal.http.AjaxCallBack;
 import net.tsz.afinal.http.AjaxParams;
 import android.annotation.SuppressLint;
+import android.app.ActionBar.LayoutParams;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Intent;
@@ -20,6 +21,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 import android.view.Display;
+import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -31,6 +33,7 @@ import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.Button;
 import android.widget.GridView;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
@@ -81,7 +84,8 @@ public class HomeActivity extends Activity {
 
 	private TextView mLoadSeconMenuFailedBtn;
 	private TextView mLoadProgramFailedBtn;
-    
+    //首次加载标志
+	private boolean isFirstLoad=true;
 	//左侧菜单相关
 	private Model_LeftMenu mLeftList;
 	private ListView mListMenu;
@@ -109,17 +113,40 @@ public class HomeActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_home);
 		initView();
-		GetLeftMenu();
-		registerMyReceiver();
+		initLoadView();
 		startUpdatAndGetMsgService();
-	    
+		registerMyReceiver();
+		
+		
+
 
 	}
-
-
-
+	 @Override  
+	    public void onWindowFocusChanged(boolean hasFocus)  
+	    {  
+	        if (hasFocus)  
+	        {   
+	        	if(isFirstLoad){
+	        		GetLeftMenu();
+	        	}
+	        	isFirstLoad=false;
+	        	
+	        }  
+	    } 
+	
+  
+	public int getStatusBarHeight() {  
+        int result = 0;  
+        int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");  
+        if (resourceId > 0) {  
+            result = getResources().getDimensionPixelSize(resourceId);  
+        }  
+        return result;  
+    }  
+  
 	private void GetLeftMenu() {
 		// TODO Auto-generated method stub
+		  showLoadWindow();
 		  new AjaxUtil().post(Configs.URL.getLeftMenuApi(),new PostCallback() {
 				
 				@Override
@@ -136,6 +163,7 @@ public class HomeActivity extends Activity {
 						}
 					} catch (Exception e) {
 						// TODO: handle exception
+						loadPopDismiss();
 					}
 				}
 				
@@ -144,7 +172,7 @@ public class HomeActivity extends Activity {
 				@Override
 				public void Failure() {
 					// TODO Auto-generated method stub
-					
+					loadPopDismiss();
 				}
 			});
 	}
@@ -169,6 +197,7 @@ public class HomeActivity extends Activity {
 			public void Success(String t) {
 				// TODO Auto-generated method stub
 				Log.d("data",t);
+				loadPopDismiss();
 				try {
 					Gson g=new Gson();
 					mDatelist=g.fromJson(t,new TypeToken<List<Model_date>>(){}.getType());
@@ -177,17 +206,19 @@ public class HomeActivity extends Activity {
 				    	mGv_date.setNumColumns(mDatelist.size());
 				    	mGvDate_Adapter=new DateMenuAdapter(HomeActivity.this, mDatelist);
 				    	mGv_date.setAdapter(mGvDate_Adapter);
+				    	
 				    	changeChannel(0);
 				    }	
 				} catch (Exception e) {
 					// TODO: handle exception
+					
 				}
 			}
 			
 			@Override
 			public void Failure() {
 				// TODO Auto-generated method stub
-				
+				loadPopDismiss();
 			}
 		});
 		
@@ -224,6 +255,7 @@ public class HomeActivity extends Activity {
 		mListMenu.setOnItemClickListener(mLeftMenuClick);
 		mGv_date.setOnItemClickListener(mdataMenuClick);
 		mListContent.setOnItemSelectedListener(mlistContentSelect);
+		
 	}
 	OnItemClickListener mlistContentClick=new OnItemClickListener(){
 
@@ -347,6 +379,9 @@ public class HomeActivity extends Activity {
 
 	private void getListContentFromNet(String now_rid2, final int datepos) {
 		// TODO Auto-generated method stub
+		
+	        showLoadWindow();
+	        
 		    AjaxParams params=new AjaxParams();
 		    params.put("rid", now_rid2);
 		    params.put("date", mDatelist.get(datepos).getDate());
@@ -357,18 +392,24 @@ public class HomeActivity extends Activity {
 				@Override
 				public void Success(String t) {
 					// TODO Auto-generated method stub
-					 
+					 loadPopDismiss();
 					Log.d("list",t);
 					try {
 						Gson g=new Gson();
 						now_listContent=g.fromJson(t, new TypeToken<List<Model_ListContent>>(){}.getType());
+                        log.d(now_listContent.size()+"");
 						if(now_listContent.size()>0){
 							SaveListCache();
+							showListContent();
+						}else{
+							now_listContent=new ArrayList<Model_ListContent>();
 							showListContent();
 						}
 						
 					} catch (Exception e) {
 						// TODO: handle exception
+						now_listContent=new ArrayList<Model_ListContent>();
+						showListContent();
 					}
 				}
 				
@@ -377,11 +418,13 @@ public class HomeActivity extends Activity {
 				@Override
 				public void Failure() {
 					// TODO Auto-generated method stub
-					
+					loadPopDismiss();
+					now_listContent=new ArrayList<Model_ListContent>();
+					showListContent();
 				}
 			});
-	}
-
+	} 
+    
 
 
 	/**
@@ -400,6 +443,7 @@ public class HomeActivity extends Activity {
 	@Override
 	public void onBackPressed() {
 		showExitWindow();
+//		showLoadWindow();
 	}
 
 	private PopupWindow mExitPopupWindow;
@@ -408,7 +452,7 @@ public class HomeActivity extends Activity {
 	private void showExitWindow() {
 		LayoutInflater mInflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
 		View view = mInflater.inflate(R.layout.p_exit_pop, null);
-
+       
 		Point point = new Point();
 		Display display = getWindowManager().getDefaultDisplay();
 		display.getSize(point);
@@ -441,9 +485,67 @@ public class HomeActivity extends Activity {
 
 	}
 	
+	private PopupWindow LoadWindow;
+	private LinearLayout load_pop_fail;
+	private View loadviewpop;
+	private void initLoadView() {
+		// TODO Auto-generated method stub
+		
+	}
+	@SuppressLint("NewApi")
+	private void showLoadWindow() {
+		LayoutInflater mInflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
+		final View view = mInflater.inflate(R.layout.p_load_pop, null);
+
+		Point point = new Point();
+		Display display = getWindowManager().getDefaultDisplay();
+		display.getSize(point);
+		int width = point.x;
+		int height = point.y;
+		LoadWindow = new PopupWindow(view, width, height, true);
+		view.post(new Runnable() {
+			
+			@Override
+			public void run() {
+				// TODO Auto-generated method stub
+				LoadWindow.showAsDropDown(view, 0, 0);
+			}
+		});
+		
+		LoadWindow.setOutsideTouchable(false);
+		ImageView img=(ImageView) view.findViewById(R.id.load_pop_img);
+		AnimationDrawable an=(AnimationDrawable) img.getBackground();
+		an.setOneShot(false);
+		an.start();
+//		Button sure = (Button) view.findViewById(R.id.p_eixt_sure);
+//		Button cancel = (Button) view.findViewById(R.id.p_eixt_cancel);
+//		cancel.requestFocus();
+//		cancel.setOnClickListener(new OnClickListener() {
+//			@Override
+//			public void onClick(View v) {
+//				exitPopDismiss();
+//			}
+//		});
+//		sure.setOnClickListener(new OnClickListener() {
+//			@Override
+//			public void onClick(View v) {
+//				exitPopDismiss();
+//				clearCache();
+//				android.os.Process.killProcess(android.os.Process.myPid());  
+//			}
+//
+//		});
+	}
+	
+	
 	private void exitPopDismiss() {
 		if (null != mExitPopupWindow && mExitPopupWindow.isShowing())
 			mExitPopupWindow.dismiss();
+	}
+	
+	private void loadPopDismiss() {
+		if (null != LoadWindow && LoadWindow.isShowing())
+			LoadWindow.dismiss();
 	}
 
 	@Override

@@ -1,6 +1,7 @@
 package com.moon.android.iptv.arb.film;
 
 import android.content.Context;
+import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -31,6 +32,7 @@ public class RequestDAO {
 		try {
 			String str1 = Configs.URL.getAppUpdateApi()+"&version=" + Tools.getVerName(context);
 			String str2 = RequestUtil.getInstance().request(str1);
+			Log.d("updataHttpre:",str2);
 			if (isBlank(str2))
 				return null;
 			UpdateData localUpdateData = (UpdateData) new Gson().fromJson(str2,
