@@ -116,6 +116,7 @@ public class HomeActivity extends Activity {
 		initLoadView();
 		startUpdatAndGetMsgService();
 		registerMyReceiver();
+		GetLeftMenu();
 		
 		
 
@@ -127,7 +128,7 @@ public class HomeActivity extends Activity {
 	        if (hasFocus)  
 	        {   
 	        	if(isFirstLoad){
-	        		GetLeftMenu();
+//	        		GetLeftMenu();
 	        	}
 	        	isFirstLoad=false;
 	        	
@@ -159,11 +160,12 @@ public class HomeActivity extends Activity {
 						if(mLeftList.getTvlist().size()>0){
 							//Log.d("listsuccess",mLeftList.getTvlist().size()+"");
 							showLeftMenu();
-							
+							 
 						}
 					} catch (Exception e) {
 						// TODO: handle exception
-						loadPopDismiss();
+						showPop_fail();
+						//loadPopDismiss();
 					}
 				}
 				
@@ -172,7 +174,8 @@ public class HomeActivity extends Activity {
 				@Override
 				public void Failure() {
 					// TODO Auto-generated method stub
-					loadPopDismiss();
+					showPop_fail();
+//					loadPopDismiss();
 				}
 			});
 	}
@@ -211,14 +214,15 @@ public class HomeActivity extends Activity {
 				    }	
 				} catch (Exception e) {
 					// TODO: handle exception
-					
+					showPop_fail();
 				}
 			}
 			
 			@Override
 			public void Failure() {
+				showPop_fail();
 				// TODO Auto-generated method stub
-				loadPopDismiss();
+				//loadPopDismiss();
 			}
 		});
 		
@@ -485,56 +489,80 @@ public class HomeActivity extends Activity {
 
 	}
 	
-	private PopupWindow LoadWindow;
-	private LinearLayout load_pop_fail;
-	private View loadviewpop;
-	private void initLoadView() {
-		// TODO Auto-generated method stub
-		
+	private void showPop_Pro(){
+		mImg_loadpop.setVisibility(View.VISIBLE);
+		mLine_loadbuttom.setVisibility(View.GONE);
 	}
-	@SuppressLint("NewApi")
-	private void showLoadWindow() {
+	private void showPop_fail(){
+		Log.d("loadfail","--------");
+		mImg_loadpop.setVisibility(View.GONE);
+		mLine_loadbuttom.setVisibility(View.VISIBLE);
+		mbt_reload.requestFocus();
+	}
+	private PopupWindow LoadWindow;
+//	private LinearLayout load_pop_fail;
+//	private View loadviewpop;
+	private ImageView mImg_loadpop;
+	private LinearLayout mLine_loadbuttom;
+	private Button mbt_reload,mbt_cancel;
+	private View view;
+	private void initLoadView() {
 		LayoutInflater mInflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
-		final View view = mInflater.inflate(R.layout.p_load_pop, null);
+		view = mInflater.inflate(R.layout.p_load_pop, null);
 
 		Point point = new Point();
 		Display display = getWindowManager().getDefaultDisplay();
 		display.getSize(point);
 		int width = point.x;
 		int height = point.y;
-		LoadWindow = new PopupWindow(view, width, height, true);
-		view.post(new Runnable() {
-			
-			@Override
-			public void run() {
-				// TODO Auto-generated method stub
-				LoadWindow.showAsDropDown(view, 0, 0);
-			}
-		});
+		 LoadWindow = new PopupWindow(view, width, height, true);
+		 LoadWindow.setOutsideTouchable(false);
+		 ImageView img=(ImageView) view.findViewById(R.id.load_pop_img);
+			mImg_loadpop=(ImageView) view.findViewById(R.id.load_pop_img);
+			mLine_loadbuttom=(LinearLayout) view.findViewById(R.id.load_pop_fail);
+			mbt_reload=(Button) view.findViewById(R.id.load_reload);
+			mbt_cancel=(Button) view.findViewById(R.id.load_cancel);
+			mbt_reload.setOnClickListener(new OnClickListener() {
+				
+				@Override
+				public void onClick(View arg0) {
+					// TODO Auto-generated method stub
+					
+					GetLeftMenu();
+					
+				}
+			});
+			mbt_cancel.setOnClickListener(new OnClickListener() {
+				
+				@Override
+				public void onClick(View arg0) {
+					// TODO Auto-generated method stub
+					loadPopDismiss();
+				}
+			});
+			AnimationDrawable an=(AnimationDrawable) img.getBackground();
+			an.setOneShot(false);
 		
-		LoadWindow.setOutsideTouchable(false);
-		ImageView img=(ImageView) view.findViewById(R.id.load_pop_img);
-		AnimationDrawable an=(AnimationDrawable) img.getBackground();
-		an.setOneShot(false);
-		an.start();
-//		Button sure = (Button) view.findViewById(R.id.p_eixt_sure);
-//		Button cancel = (Button) view.findViewById(R.id.p_eixt_cancel);
-//		cancel.requestFocus();
-//		cancel.setOnClickListener(new OnClickListener() {
-//			@Override
-//			public void onClick(View v) {
-//				exitPopDismiss();
-//			}
-//		});
-//		sure.setOnClickListener(new OnClickListener() {
-//			@Override
-//			public void onClick(View v) {
-//				exitPopDismiss();
-//				clearCache();
-//				android.os.Process.killProcess(android.os.Process.myPid());  
-//			}
-//
-//		});
+			an.start();
+			showPop_Pro();
+	}
+	@SuppressLint("NewApi")
+	private void showLoadWindow() {
+		    if(LoadWindow.isShowing()){
+		    	showPop_Pro();
+		    }else{
+		    	 view.post(new Runnable() {
+					 	
+						@Override
+						public void run() {
+							// TODO Auto-generated method stub
+							LoadWindow.showAsDropDown(view, 0, 0);
+						}
+				 });
+		    }
+			
+		
+	   
 	}
 	
 	
@@ -546,6 +574,8 @@ public class HomeActivity extends Activity {
 	private void loadPopDismiss() {
 		if (null != LoadWindow && LoadWindow.isShowing())
 			LoadWindow.dismiss();
+		
+		initLoadView();
 	}
 
 	@Override

@@ -90,10 +90,11 @@ public class LeftMenuAdapter extends BaseAdapter {
 			holder = (Holder) convertView.getTag();
 		}
 		if(position==clickpos){
-			holder.name.setTextColor(mContext.getResources().getColor(R.color.yellow_half));
+//			holder.name.setTextColor(mContext.getResources().getColor(R.color.yellow_half));
+			holder.name.setTextColor((ColorStateList) mContext.getResources().getColorStateList(R.drawable.left_color_click_selector) );
 		}else{
-//			 holder.name.setTextColor((ColorStateList) mContext.getResources().getColorStateList(R.drawable.left_color_selector) );
-			holder.name.setTextColor(mContext.getResources().getColor(R.color.white));
+			 holder.name.setTextColor((ColorStateList) mContext.getResources().getColorStateList(R.drawable.left_color_selector) );
+//			holder.name.setTextColor(mContext.getResources().getColor(R.color.white));
 		}
 		ImageLoader.getInstance().displayImage(item.getIco(), holder.logo,
 				mOptions);

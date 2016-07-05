@@ -62,9 +62,9 @@ public class Configs {
 		public static final String HOST3="http://replay3.yourepg.com:9011/Api/";//正式库3
 		public static String HOST=HOST1;//正式库
 		 
-//		public static final String HOST1="http://192.168.100.221:9016/Api/";//测试库1
-//		public static final String HOST2="http://192.168.100.221:9016/Api/";//测试库1
-//		public static final String HOST3="http://192.168.100.221:9016/Api/";//测试库1
+//		public static final String HOST1="http://23.222.111.178:9011/Api/";//测试库1
+//		public static final String HOST2="http://23.222.111.178:9011/Api/";//测试库1
+//		public static final String HOST3="http://23.222.111.178:9011/Api/";//测试库1
 //		public static String HOST=HOST1;//测试库
 	
 		/**左侧菜单地址*/

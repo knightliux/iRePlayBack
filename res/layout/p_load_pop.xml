@@ -47,7 +47,7 @@
                     android:textSize="35dp" />
 
                 <Button
-                    android:id="@+id/load_reload"
+                    android:id="@+id/load_cancel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="40dp"

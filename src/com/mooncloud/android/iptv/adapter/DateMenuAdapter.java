@@ -93,13 +93,15 @@ public class DateMenuAdapter extends BaseAdapter {
 			holder = (Holder) convertView.getTag();
 		}
 		if(position==clickpos){
-			holder.date.setTextColor(mContext.getResources().getColor(R.color.yellow_half));
-			holder.w.setTextColor(mContext.getResources().getColor(R.color.yellow_half));
+//			holder.date.setTextColor(mContext.getResources().getColor(R.color.yellow_half));
+//			holder.w.setTextColor(mContext.getResources().getColor(R.color.yellow_half));
+			holder.date.setTextColor((ColorStateList) mContext.getResources().getColorStateList(R.drawable.left_color_click_selector) );
+			 holder.w.setTextColor((ColorStateList) mContext.getResources().getColorStateList(R.drawable.left_color_click_selector) );
 		}else{
-			holder.date.setTextColor(mContext.getResources().getColor(R.color.white));
-			holder.w.setTextColor(mContext.getResources().getColor(R.color.white));
-//			 holder.date.setTextColor((ColorStateList) mContext.getResources().getColorStateList(R.drawable.left_color_selector) );
-//			 holder.w.setTextColor((ColorStateList) mContext.getResources().getColorStateList(R.drawable.left_color_selector) );
+//			holder.date.setTextColor(mContext.getResources().getColor(R.color.white));
+//			holder.w.setTextColor(mContext.getResources().getColor(R.color.white));
+			 holder.date.setTextColor((ColorStateList) mContext.getResources().getColorStateList(R.drawable.left_color_selector) );
+			 holder.w.setTextColor((ColorStateList) mContext.getResources().getColorStateList(R.drawable.left_color_selector) );
 		}
 		holder.date.setText(item.getDate());
 		holder.w.setText(item.getW());
